@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+                             https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
+         version="5.0">
+
+    <display-name>图书漂流共享借阅平台</display-name>
+
+    <!-- ==================== F7 统一编码过滤器（必须最先执行） ==================== -->
+    <filter>
+        <filter-name>encodingFilter</filter-name>
+        <filter-class>com.book.filter.EncodingFilter</filter-class>
+        <init-param>
+            <param-name>encoding</param-name>
+            <param-value>UTF-8</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>encodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <!-- ==================== F6 登录拦截过滤器 ==================== -->
+    <filter>
+        <filter-name>loginFilter</filter-name>
+        <filter-class>com.book.filter.LoginFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>loginFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <!-- ==================== 选做 F9 监听器 ==================== -->
+    <listener>
+        <listener-class>com.book.listener.InitDataListener</listener-class>
+    </listener>
+    <listener>
+        <listener-class>com.book.listener.OnlineCountListener</listener-class>
+    </listener>
+
+    <!-- ==================== 静态资源 MIME 类型（确保 JS/CSS 以 UTF-8 输出） ==================== -->
+    <mime-mapping>
+        <extension>js</extension>
+        <mime-type>application/javascript;charset=UTF-8</mime-type>
+    </mime-mapping>
+    <mime-mapping>
+        <extension>css</extension>
+        <mime-type>text/css;charset=UTF-8</mime-type>
+    </mime-mapping>
+
+    <!-- 欢迎页：访问项目根路径时进入 index.jsp -->
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+
+</web-app>

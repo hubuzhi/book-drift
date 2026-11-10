@@ -1,0 +1,13 @@
+# Maven 构建产物
+target/
+*.war
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# 系统
+.DS_Store
+Thumbs.db
