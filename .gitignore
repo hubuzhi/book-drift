@@ -11,3 +11,7 @@ target/
 # 系统
 .DS_Store
 Thumbs.db
+
+# 本地临时脚本与说明
+test_upload.ps1
+使用说明.txt
