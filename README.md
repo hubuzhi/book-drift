@@ -59,6 +59,60 @@ src/main/
     └── WEB-INF/      配置、内置书籍文本
 ```
 
+## 容器化部署（本人独立完成）
+
+在团队代码基础上，本人额外完成了本项目的**容器化改造**，把「手动拷贝 WAR 到 Tomcat」变成
+「一条命令拉起完整应用」。
+
+### 多阶段构建
+
+`Dockerfile` 分两个阶段，构建环境与运行环境分离：
+
+```dockerfile
+# 阶段一：Maven 打包
+FROM maven:3.8-openjdk-17 AS build
+WORKDIR /build
+COPY pom.xml .
+RUN mvn -B -q dependency:go-offline      # 先装依赖，利用层缓存
+COPY src ./src
+RUN mvn -B -q clean package -DskipTests   # 产出 target/book-floating.war
+
+# 阶段二：只保留 Tomcat 与 WAR
+FROM tomcat:10.1-jdk17-temurin
+RUN rm -rf /usr/local/tomcat/webapps/*                          # 清掉示例应用
+COPY --from=build /build/target/book-floating.war \
+     /usr/local/tomcat/webapps/ROOT.war                          # 以 ROOT 部署
+EXPOSE 8080
+HEALTHCHECK CMD bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 || exit 1'
+CMD ["catalina.sh", "run"]
+```
+
+**为什么用多阶段**：Maven + 完整 JDK + 源码只存在于构建阶段，运行镜像里只有 Tomcat 与一个 WAR，
+镜像更小、也更安全（不带构建工具与源码）。
+
+### 运行
+
+```bash
+# 方式一：compose（推荐）
+docker compose up -d --build
+
+# 方式二：手动
+docker build -t hubuzhi/book-drift:1.0 .
+docker run -d --name book-drift -p 8081:8080 hubuzhi/book-drift:1.0
+```
+
+访问 <http://localhost:8081>，启动后 302 跳转到 `/bookList` 图书列表页。
+
+### 关键处理
+
+| 问题 | 处理方式 |
+| --- | --- |
+| 容器内端口冲突 | 容器内保持 8080，宿主映射到 8081（8080 被 Harbor 占用） |
+| 应用部署路径 | WAR 重命名为 `ROOT.war`，访问根路径即为应用，不带 `/book-floating` 前缀 |
+| 健康检查 | 基础镜像没有 curl，改用 `bash` 的 `/dev/tcp` 探测端口，避免额外安装依赖 |
+| 中文乱码 | 设置 `LANG=C.UTF-8` 与 `TZ=Asia/Shanghai` |
+| 启动顺序 | `start_period=60s`，给 Tomcat 解压 WAR 预留时间 |
+
 ## 本地运行
 
 ```bash
